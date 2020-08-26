@@ -54,7 +54,7 @@ namespace CoffeeHouse.Controllers
 
             var product = await _context.Products
                 .AsNoTracking()
-                .SingleAsync(p => p.Id == id);
+                .SingleOrDefaultAsync(p => p.Id == id);
             if (product == null)
             {
                 return NotFound();
@@ -105,7 +105,7 @@ namespace CoffeeHouse.Controllers
 
             var product = await _context.Products
                 .AsNoTracking()
-                .SingleAsync(m => m.Id == id);
+                .SingleOrDefaultAsync(m => m.Id == id);
             if (product == null)
             {
                 return NotFound();
@@ -120,7 +120,7 @@ namespace CoffeeHouse.Controllers
         {
             var product = await _context.Products
                 .AsNoTracking()
-                .SingleAsync(p => p.Id == id);
+                .SingleOrDefaultAsync(p => p.Id == id);
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

@@ -112,7 +112,7 @@ namespace CoffeeHouse.Controllers
         {
             var cashier = await _context.Cashiers
                 .AsNoTracking()
-                .SingleAsync(c => c.Id == id);
+                .SingleOrDefaultAsync(c => c.Id == id);
             _context.Cashiers.Remove(cashier);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

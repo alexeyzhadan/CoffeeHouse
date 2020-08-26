@@ -57,7 +57,7 @@ namespace CoffeeHouse.Controllers
 
             var order = await _context.Orders
                 .AsNoTracking()
-                .SingleAsync(o => o.Id == id);
+                .SingleOrDefaultAsync(o => o.Id == id);
             if (order == null)
             {
                 return NotFound();
@@ -111,7 +111,7 @@ namespace CoffeeHouse.Controllers
             var order = await _context.Orders
                 .Include(o => o.Cashier)
                 .Include(o => o.Client)
-                .SingleAsync(m => m.Id == id);
+                .SingleOrDefaultAsync(m => m.Id == id);
             if (order == null)
             {
                 return NotFound();
@@ -126,7 +126,7 @@ namespace CoffeeHouse.Controllers
         {
             var order = await _context.Orders
                 .AsNoTracking()
-                .SingleAsync(o => o.Id == id);
+                .SingleOrDefaultAsync(o => o.Id == id);
             _context.Orders.Remove(order);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

@@ -48,7 +48,7 @@ namespace CoffeeHouse.Controllers
 
             var category = await _context.Categories
                 .AsNoTracking()
-                .SingleAsync(c => c.Id == id);
+                .SingleOrDefaultAsync(c => c.Id == id);
             if (category == null)
             {
                 return NotFound();
@@ -97,7 +97,7 @@ namespace CoffeeHouse.Controllers
 
             var category = await _context.Categories
                 .AsNoTracking()
-                .SingleAsync(m => m.Id == id);
+                .SingleOrDefaultAsync(m => m.Id == id);
             if (category == null)
             {
                 return NotFound();
@@ -112,7 +112,7 @@ namespace CoffeeHouse.Controllers
         {
             var category = await _context.Categories
                 .AsNoTracking()
-                .SingleAsync(c => c.Id == id);
+                .SingleOrDefaultAsync(c => c.Id == id);
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

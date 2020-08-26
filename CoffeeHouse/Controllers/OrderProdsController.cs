@@ -31,7 +31,7 @@ namespace CoffeeHouse.Controllers
                 .Include(o => o.OrderProds)
                     .ThenInclude(op => op.Product)
                 .AsNoTracking()
-                .SingleAsync(o => o.Id == orderId);
+                .SingleOrDefaultAsync(o => o.Id == orderId);
             if (order == null)
             {
                 return NotFound();
@@ -49,7 +49,7 @@ namespace CoffeeHouse.Controllers
 
             var order = await _context.Orders
                 .AsNoTracking()
-                .SingleAsync(o => o.Id == orderId);
+                .SingleOrDefaultAsync(o => o.Id == orderId);
             if (order == null)
             {
                 return NotFound();
@@ -90,8 +90,8 @@ namespace CoffeeHouse.Controllers
                     .ThenInclude(op => op.Product)
                 .AsNoTracking()
                 .SingleOrDefaultAsync(o => o.Id == orderId);
-            var orderProd = order.OrderProds
-                .Single(op => op.ProductId == productId 
+            var orderProd = order?.OrderProds
+                .SingleOrDefault(op => op.ProductId == productId 
                     && op.Mark == mark);
             if (orderProd == null)
             {
@@ -130,7 +130,7 @@ namespace CoffeeHouse.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!OrderProdExists(oldOrderId, oldProductId, oldMark))
+                    if (!await OrderProdExistsAsync(oldOrderId, oldProductId, oldMark))
                     {
                         return NotFound();
                     }
@@ -157,8 +157,8 @@ namespace CoffeeHouse.Controllers
                     .ThenInclude(op => op.Product)
                 .AsNoTracking()
                 .SingleOrDefaultAsync(o => o.Id == orderId);
-            var orderProd = order.OrderProds
-                .Single(op => op.Mark == mark
+            var orderProd = order?.OrderProds
+                .SingleOrDefault(op => op.Mark == mark
                     && op.ProductId == productId);
             if (orderProd == null)
             {
@@ -174,20 +174,27 @@ namespace CoffeeHouse.Controllers
             var order = await _context.Orders
                 .Include(o => o.OrderProds)
                 .SingleOrDefaultAsync(o => o.Id == orderId);
-            order.OrderProds.RemoveAll(op => op.Mark == mark
-                && op.ProductId == productId);
-            await _context.SaveChangesAsync();
+            if (order != null)
+            {
+                order.OrderProds.RemoveAll(op => op.Mark == mark
+                    && op.ProductId == productId);
+                await _context.SaveChangesAsync();
+            }
             return RedirectToAction(nameof(Index), new { orderId });
         }
 
-        private bool OrderProdExists(int orderId, int productId, string mark)
+        private async Task<bool> OrderProdExistsAsync(int orderId, int productId, string mark)
         {
-            return _context.Orders
+            var order = await _context.Orders
                 .Include(o => o.OrderProds)
                 .AsNoTracking()
-                .SingleOrDefault(o => o.Id == orderId)
-                .OrderProds.Any(op => op.Mark == mark 
-                    && op.ProductId == productId);
+                .SingleOrDefaultAsync(o => o.Id == orderId);
+            if (order == null)
+            {
+                return false;
+            }
+            return order.OrderProds.Any(op => op.Mark == mark 
+                && op.ProductId == productId);
         }
 
         private IEnumerable<object> GetProductFullNames()

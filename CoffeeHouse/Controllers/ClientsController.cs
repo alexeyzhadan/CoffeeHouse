@@ -48,7 +48,7 @@ namespace CoffeeHouse.Controllers
 
             var client = await _context.Clients
                 .AsNoTracking()
-                .SingleAsync(c => c.Id == id);
+                .SingleOrDefaultAsync(c => c.Id == id);
             if (client == null)
             {
                 return NotFound();
@@ -97,7 +97,7 @@ namespace CoffeeHouse.Controllers
 
             var client = await _context.Clients
                 .AsNoTracking()
-                .SingleAsync(m => m.Id == id);
+                .SingleOrDefaultAsync(m => m.Id == id);
             if (client == null)
             {
                 return NotFound();
@@ -112,7 +112,7 @@ namespace CoffeeHouse.Controllers
         {
             var client = await _context.Clients
                 .AsNoTracking()
-                .SingleAsync(c => c.Id == id);
+                .SingleOrDefaultAsync(c => c.Id == id);
             _context.Clients.Remove(client);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
