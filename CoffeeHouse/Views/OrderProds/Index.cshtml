@@ -1,0 +1,75 @@
+﻿@model CoffeeHouse.Models.Order
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<div>
+    <h4>Order</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Date)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Date)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Client)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Client.Name)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Cashier)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Cashier.FullName)
+        </dd>
+    </dl>
+</div>
+<p>
+    <a asp-action="Create" asp-route-orderId="@Model.Id">Create New</a>
+    <a asp-controller="Orders" asp-action="Index">Back to List</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.OrderProds.FirstOrDefault().Product)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.OrderProds.FirstOrDefault().Count)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.OrderProds.FirstOrDefault().Mark)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.OrderProds) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Product.Name), @Html.DisplayFor(modelItem => item.Product.Quantity)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Count)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Mark)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-orderId="@item.OrderId"
+                   asp-route-productId="@item.ProductId"
+                   asp-route-mark="@item.Mark">Edit</a> |
+                <a asp-action="Delete" asp-route-orderId="@item.OrderId"
+                   asp-route-productId="@item.ProductId"
+                   asp-route-mark="@item.Mark">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
