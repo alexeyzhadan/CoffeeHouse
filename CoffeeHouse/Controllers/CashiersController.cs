@@ -1,24 +1,25 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using CoffeeHouse.Data;
 using CoffeeHouse.Models;
+using CoffeeHouse.Services.DbRepositories.Interfaces;
 
 namespace CoffeeHouse.Controllers
 {
     public class CashiersController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICashierRepository _cashierRepository;
 
-        public CashiersController(ApplicationDbContext context)
+        public CashiersController(ICashierRepository cashierRepository)
         {
-            _context = context;
+            _cashierRepository = cashierRepository;
         }
 
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Cashiers.AsNoTracking().ToListAsync());
+            return View(await _cashierRepository
+                .GetAllOrderedByFullName()
+                .ToListAsync());
         }
 
         public IActionResult Create()
@@ -32,8 +33,7 @@ namespace CoffeeHouse.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(cashier);
-                await _context.SaveChangesAsync();
+                await _cashierRepository.AddAsync(cashier);
                 return RedirectToAction(nameof(Index));
             }
             return View(cashier);
@@ -46,9 +46,7 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            var cashier = await _context.Cashiers
-                .AsNoTracking()
-                .SingleOrDefaultAsync(c => c.Id == id);
+            var cashier = await _cashierRepository.GetByIdAsync((int)id);
             if (cashier == null)
             {
                 return NotFound();
@@ -67,21 +65,13 @@ namespace CoffeeHouse.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                if (_cashierRepository.Exists(cashier))
                 {
-                    _context.Update(cashier);
-                    await _context.SaveChangesAsync();
+                    await _cashierRepository.UpdateAsync(cashier);
                 }
-                catch (DbUpdateConcurrencyException)
+                else
                 {
-                    if (!CashierExists(cashier.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return NotFound();
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -95,9 +85,7 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            var cashier = await _context.Cashiers
-                .AsNoTracking()
-                .SingleOrDefaultAsync(m => m.Id == id);
+            var cashier = await _cashierRepository.GetByIdAsync((int)id);
             if (cashier == null)
             {
                 return NotFound();
@@ -110,19 +98,14 @@ namespace CoffeeHouse.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var cashier = await _context.Cashiers
-                .AsNoTracking()
-                .SingleOrDefaultAsync(c => c.Id == id);
-            _context.Cashiers.Remove(cashier);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
+            var cashier = await _cashierRepository.GetByIdAsync(id);
+            if (cashier == null)
+            {
+                return NotFound();
+            }
 
-        private bool CashierExists(int id)
-        {
-            return _context.Cashiers
-                .AsNoTracking()
-                .Any(e => e.Id == id);
+            await _cashierRepository.RemoveAsync(cashier);
+            return RedirectToAction(nameof(Index));
         }
     }
 }
