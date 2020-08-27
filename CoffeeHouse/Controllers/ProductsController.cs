@@ -1,33 +1,35 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using CoffeeHouse.Data;
 using CoffeeHouse.Models;
+using CoffeeHouse.Services.DbRepositories.Interfaces;
 
 namespace CoffeeHouse.Controllers
 {
     public class ProductsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IProductRepository _productRepository;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public ProductsController(ApplicationDbContext context)
+        public ProductsController(
+            IProductRepository productRepository,
+            ICategoryRepository categoryRepository)
         {
-            _context = context;
+            _productRepository = productRepository;
+            _categoryRepository = categoryRepository;
         }
 
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Products
-                .Include(p => p.Category)
-                .AsNoTracking()
+            return View(await _productRepository
+                .GetAllWithCategoryOrderedByCategoryNameThenByName()
                 .ToListAsync());
         }
 
         public IActionResult Create()
         {
-            ViewData["CategoryId"] = new SelectList(_context.Categories.AsNoTracking(), "Id", "Name");
+            ViewData["CategoryId"] = GetSelectListCategory();
             return View();
         }
 
@@ -37,11 +39,10 @@ namespace CoffeeHouse.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(product);
-                await _context.SaveChangesAsync();
+                await _productRepository.AddAsync(product);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories.AsNoTracking(), "Id", "Name", product.CategoryId);
+            ViewData["CategoryId"] = GetSelectListCategory(product.CategoryId);
             return View(product);
         }
 
@@ -52,14 +53,12 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products
-                .AsNoTracking()
-                .SingleOrDefaultAsync(p => p.Id == id);
+            var product = await _productRepository.GetByIdAsync((int)id);
             if (product == null)
             {
                 return NotFound();
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories.AsNoTracking(), "Id", "Name", product.CategoryId);
+            ViewData["CategoryId"] = GetSelectListCategory(product.CategoryId);
             return View(product);
         }
 
@@ -74,25 +73,17 @@ namespace CoffeeHouse.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                if (_productRepository.Exists(product))
                 {
-                    _context.Update(product);
-                    await _context.SaveChangesAsync();
+                    await _productRepository.UpdateAsync(product);
                 }
-                catch (DbUpdateConcurrencyException)
+                else
                 {
-                    if (!ProductExists(product.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return NotFound();
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories.AsNoTracking(), "Id", "Name", product.CategoryId);
+            ViewData["CategoryId"] = GetSelectListCategory(product.CategoryId);
             return View(product);
         }
 
@@ -103,9 +94,7 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products
-                .AsNoTracking()
-                .SingleOrDefaultAsync(m => m.Id == id);
+            var product = await _productRepository.GetByIdAsync((int)id);
             if (product == null)
             {
                 return NotFound();
@@ -118,17 +107,24 @@ namespace CoffeeHouse.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var product = await _context.Products
-                .AsNoTracking()
-                .SingleOrDefaultAsync(p => p.Id == id);
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            await _productRepository.RemoveAsync(product);
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProductExists(int id)
+        private SelectList GetSelectListCategory()
+        { 
+            return new SelectList(_categoryRepository.GetAllOrderedByName(), "Id", "Name");
+        }
+
+        private SelectList GetSelectListCategory(int defaultItem)
         {
-            return _context.Products.AsNoTracking().Any(e => e.Id == id);
+            return new SelectList(_categoryRepository.GetAllOrderedByName(), "Id", "Name", defaultItem);
         }
     }
 }
