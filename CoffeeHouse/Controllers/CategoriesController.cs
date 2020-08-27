@@ -1,24 +1,25 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using CoffeeHouse.Data;
 using CoffeeHouse.Models;
+using CoffeeHouse.Services.DbRepositories.Interfaces;
 
 namespace CoffeeHouse.Controllers
 {
     public class CategoriesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public CategoriesController(ApplicationDbContext context)
+        public CategoriesController(ICategoryRepository categoryRepository)
         {
-            _context = context;
+            _categoryRepository = categoryRepository;
         }
 
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Categories.AsNoTracking().ToListAsync());
+            return View(await _categoryRepository
+                .GetAllOrderedByName()
+                .ToListAsync());
         }
 
         public IActionResult Create()
@@ -32,8 +33,7 @@ namespace CoffeeHouse.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(category);
-                await _context.SaveChangesAsync();
+                await _categoryRepository.AddAsync(category);
                 return RedirectToAction(nameof(Index));
             }
             return View(category);
@@ -46,9 +46,7 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            var category = await _context.Categories
-                .AsNoTracking()
-                .SingleOrDefaultAsync(c => c.Id == id);
+            var category = await _categoryRepository.GetByIdAsync((int)id);
             if (category == null)
             {
                 return NotFound();
@@ -67,21 +65,13 @@ namespace CoffeeHouse.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                if (_categoryRepository.Exists(category))
                 {
-                    _context.Update(category);
-                    await _context.SaveChangesAsync();
+                    await _categoryRepository.UpdateAsync(category);
                 }
-                catch (DbUpdateConcurrencyException)
+                else
                 {
-                    if (!CategoryExists(category.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return NotFound();
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -95,9 +85,7 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            var category = await _context.Categories
-                .AsNoTracking()
-                .SingleOrDefaultAsync(m => m.Id == id);
+            var category = await _categoryRepository.GetByIdAsync((int)id);
             if (category == null)
             {
                 return NotFound();
@@ -110,17 +98,14 @@ namespace CoffeeHouse.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var category = await _context.Categories
-                .AsNoTracking()
-                .SingleOrDefaultAsync(c => c.Id == id);
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
+            var category = await _categoryRepository.GetByIdAsync(id);
+            if (category == null)
+            {
+                return NotFound();
+            }
 
-        private bool CategoryExists(int id)
-        {
-            return _context.Categories.AsNoTracking().Any(e => e.Id == id);
+            await _categoryRepository.RemoveAsync(category);
+            return RedirectToAction(nameof(Index));
         }
     }
 }
