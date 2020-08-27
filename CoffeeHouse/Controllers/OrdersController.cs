@@ -1,35 +1,39 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using CoffeeHouse.Data;
 using CoffeeHouse.Models;
+using CoffeeHouse.Services.DbRepositories.Interfaces;
 
 namespace CoffeeHouse.Controllers
 {
     public class OrdersController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IOrderRepository _orderRepository;
+        private readonly IClientRepository _clientRepository;
+        private readonly ICashierRepository _cashierRepository;
 
-        public OrdersController(ApplicationDbContext context)
+        public OrdersController(
+            IOrderRepository orderRepository,
+            IClientRepository clientRepository,
+            ICashierRepository cashierRepository)
         {
-            _context = context;
+            _orderRepository = orderRepository;
+            _clientRepository = clientRepository;
+            _cashierRepository = cashierRepository;
         }
 
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Orders
-                .Include(o => o.Cashier)
-                .Include(o => o.Client)
-                .AsNoTracking()
+            return View(await _orderRepository
+                .GetAllWithCashiersAndClientsOrderByDate()
                 .ToListAsync());
         }
 
         public IActionResult Create()
         {
-            ViewData["CashierId"] = new SelectList(_context.Cashiers.AsNoTracking(), "Id", "FullName");
-            ViewData["ClientId"] = new SelectList(_context.Clients.AsNoTracking(), "Id", "Name");
+            ViewData["CashierId"] = GetSelectListOfCashiers();
+            ViewData["ClientId"] = GetSelectListOfClients();
             return View();
         }
 
@@ -39,12 +43,11 @@ namespace CoffeeHouse.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(order);
-                await _context.SaveChangesAsync();
+                await _orderRepository.AddAsync(order);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CashierId"] = new SelectList(_context.Cashiers.AsNoTracking(), "Id", "FullName", order.CashierId);
-            ViewData["ClientId"] = new SelectList(_context.Clients.AsNoTracking(), "Id", "Name", order.ClientId);
+            ViewData["CashierId"] = GetSelectListOfCashiers(order.CashierId);
+            ViewData["ClientId"] = GetSelectListOfClients((int)order.ClientId);
             return View(order);
         }
 
@@ -55,15 +58,13 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            var order = await _context.Orders
-                .AsNoTracking()
-                .SingleOrDefaultAsync(o => o.Id == id);
+            var order = await _orderRepository.GetByIdAsync((int)id);
             if (order == null)
             {
                 return NotFound();
             }
-            ViewData["CashierId"] = new SelectList(_context.Cashiers.AsNoTracking(), "Id", "FullName", order.CashierId);
-            ViewData["ClientId"] = new SelectList(_context.Clients.AsNoTracking(), "Id", "Name", order.ClientId);
+            ViewData["CashierId"] = GetSelectListOfCashiers(order.CashierId);
+            ViewData["ClientId"] = GetSelectListOfClients((int)order.ClientId);
             return View(order);
         }
 
@@ -78,26 +79,18 @@ namespace CoffeeHouse.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                if (_orderRepository.Exists(order))
                 {
-                    _context.Update(order);
-                    await _context.SaveChangesAsync();
+                    await _orderRepository.UpdateAsync(order);
                 }
-                catch (DbUpdateConcurrencyException)
+                else
                 {
-                    if (!OrderExists(order.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return NotFound();
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CashierId"] = new SelectList(_context.Cashiers.AsNoTracking(), "Id", "FullName", order.CashierId);
-            ViewData["ClientId"] = new SelectList(_context.Clients.AsNoTracking(), "Id", "Name", order.ClientId);
+            ViewData["CashierId"] = GetSelectListOfCashiers(order.CashierId);
+            ViewData["ClientId"] = GetSelectListOfClients((int)order.ClientId);
             return View(order);
         }
 
@@ -108,10 +101,7 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            var order = await _context.Orders
-                .Include(o => o.Cashier)
-                .Include(o => o.Client)
-                .SingleOrDefaultAsync(m => m.Id == id);
+            var order = await _orderRepository.GetByIdAsync((int)id);
             if (order == null)
             {
                 return NotFound();
@@ -124,17 +114,34 @@ namespace CoffeeHouse.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var order = await _context.Orders
-                .AsNoTracking()
-                .SingleOrDefaultAsync(o => o.Id == id);
-            _context.Orders.Remove(order);
-            await _context.SaveChangesAsync();
+            var order = await _orderRepository.GetByIdAsync(id);
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            await _orderRepository.RemoveAsync(order);
             return RedirectToAction(nameof(Index));
         }
 
-        private bool OrderExists(int id)
+        private SelectList GetSelectListOfCashiers()
+        { 
+            return new SelectList(_cashierRepository.GetAllOrderedByFullName(), "Id", "FullName");
+        }
+
+        private SelectList GetSelectListOfCashiers(int defaultItemId)
         {
-            return _context.Orders.AsNoTracking().Any(e => e.Id == id);
+            return new SelectList(_cashierRepository.GetAllOrderedByFullName(), "Id", "FullName", defaultItemId);
+        }
+
+        private SelectList GetSelectListOfClients()
+        { 
+            return new SelectList(_clientRepository.GetAllOrderedByName(), "Id", "Name");
+        }
+
+        private SelectList GetSelectListOfClients(int defaultItemId)
+        {
+            return new SelectList(_clientRepository.GetAllOrderedByName(), "Id", "Name", defaultItemId);
         }
     }
 }
