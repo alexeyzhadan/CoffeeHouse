@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CoffeeHouse.Services.DbRepositories.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 namespace CoffeeHouse.Models
 {
-    public class Client
+    public class Client : IDefaultEntity
     {
         public int Id { get; set; }
 

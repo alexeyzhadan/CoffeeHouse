@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CoffeeHouse.Services.DbRepositories.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 namespace CoffeeHouse.Models
 {
-    public class Product
+    public class Product : IDefaultEntity
     {
         public int Id { get; set; }
 

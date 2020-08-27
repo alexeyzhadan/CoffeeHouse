@@ -1,10 +1,11 @@
-﻿using System;
+﻿using CoffeeHouse.Services.DbRepositories.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace CoffeeHouse.Models
 {
-    public class Order
+    public class Order : IDefaultEntity
     {
         public int Id { get; set; }
 

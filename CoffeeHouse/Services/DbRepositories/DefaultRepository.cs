@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace CoffeeHouse.Services.DbRepositories
 {
-    public abstract class BaseRepository<T> : IRepository<T> where T : class
+    public abstract class DefaultRepository<T> : IDefaultEntityRepository<T> where T : class, IDefaultEntity
     {
         protected readonly ApplicationDbContext _db;
 
-        public BaseRepository(ApplicationDbContext context)
+        public DefaultRepository(ApplicationDbContext context)
         {
             _db = context;
         }
@@ -18,6 +18,16 @@ namespace CoffeeHouse.Services.DbRepositories
         public virtual IQueryable<T> GetAll() 
         {
             return _db.Set<T>().AsNoTracking();
+        }
+
+        public virtual T GetById(int id)
+        {
+            return GetAll().SingleOrDefault(e => e.Id == id);
+        }
+
+        public virtual async Task<T> GetByIdAsync(int id)
+        {
+            return await Task.Run(() => GetById(id));
         }
 
         public virtual void Add(T entity)
@@ -53,6 +63,9 @@ namespace CoffeeHouse.Services.DbRepositories
             await Task.Run(() => Remove(entity));
         }
 
-        public abstract bool Exists(T entity);
+        public virtual bool Exists(T entity)
+        {
+            return GetAll().Any(e => e.Id == entity.Id);
+        }
     }
 }

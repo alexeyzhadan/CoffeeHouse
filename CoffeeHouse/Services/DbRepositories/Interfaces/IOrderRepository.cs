@@ -2,7 +2,7 @@
 
 namespace CoffeeHouse.Services.DbRepositories.Interfaces
 {
-    public interface IOrderRepository : IRepository<Order>
+    public interface IOrderRepository : IDefaultEntityRepository<Order>
     {
     }
 }
