@@ -6,6 +6,7 @@ using CoffeeHouse.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using CoffeeHouse.Services.DbRepositories;
 
 namespace CoffeeHouse
 {
@@ -25,6 +26,8 @@ namespace CoffeeHouse
                     Configuration.GetConnectionString("DefaultConnection")));
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddDbRepositories();
+
             services.AddControllersWithViews();
             services.AddRazorPages();
         }
