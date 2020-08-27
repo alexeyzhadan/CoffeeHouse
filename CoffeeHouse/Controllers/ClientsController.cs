@@ -1,24 +1,25 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using CoffeeHouse.Data;
 using CoffeeHouse.Models;
+using CoffeeHouse.Services.DbRepositories.Interfaces;
 
 namespace CoffeeHouse.Controllers
 {
     public class ClientsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IClientRepository _clientRepository;
 
-        public ClientsController(ApplicationDbContext context)
+        public ClientsController(IClientRepository clientRepository)
         {
-            _context = context;
+            _clientRepository = clientRepository;
         }
 
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Clients.AsNoTracking().ToListAsync());
+            return View(await _clientRepository
+                .GetAllOrderedByName()
+                .ToListAsync());
         }
 
         public IActionResult Create()
@@ -32,8 +33,7 @@ namespace CoffeeHouse.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(client);
-                await _context.SaveChangesAsync();
+                await _clientRepository.AddAsync(client);
                 return RedirectToAction(nameof(Index));
             }
             return View(client);
@@ -46,9 +46,7 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            var client = await _context.Clients
-                .AsNoTracking()
-                .SingleOrDefaultAsync(c => c.Id == id);
+            var client = await _clientRepository.GetByIdAsync((int)id);
             if (client == null)
             {
                 return NotFound();
@@ -67,21 +65,13 @@ namespace CoffeeHouse.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                if (_clientRepository.Exists(client))
                 {
-                    _context.Update(client);
-                    await _context.SaveChangesAsync();
+                    await _clientRepository.AddAsync(client);
                 }
-                catch (DbUpdateConcurrencyException)
+                else
                 {
-                    if (!ClientExists(client.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return NotFound();
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -95,9 +85,7 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            var client = await _context.Clients
-                .AsNoTracking()
-                .SingleOrDefaultAsync(m => m.Id == id);
+            var client = await _clientRepository.GetByIdAsync((int)id);
             if (client == null)
             {
                 return NotFound();
@@ -110,17 +98,14 @@ namespace CoffeeHouse.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var client = await _context.Clients
-                .AsNoTracking()
-                .SingleOrDefaultAsync(c => c.Id == id);
-            _context.Clients.Remove(client);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
+            var client = await _clientRepository.GetByIdAsync(id);
+            if (client == null)
+            {
+                return NotFound();
+            }
 
-        private bool ClientExists(int id)
-        {
-            return _context.Clients.AsNoTracking().Any(e => e.Id == id);
+            await _clientRepository.RemoveAsync(client);
+            return RedirectToAction(nameof(Index));
         }
     }
 }
