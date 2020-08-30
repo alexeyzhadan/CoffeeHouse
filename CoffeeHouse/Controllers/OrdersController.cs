@@ -50,7 +50,7 @@ namespace CoffeeHouse.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["CashierId"] = _customSelectList.CreateListOfCashierFullNames(order.CashierId);
-            ViewData["ClientId"] = _customSelectList.CreateListOfClientNames((int)order.ClientId);
+            ViewData["ClientId"] = _customSelectList.CreateListOfClientNames(order.ClientId.ToString());
             return View(order);
         }
 
@@ -67,7 +67,7 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
             ViewData["CashierId"] = _customSelectList.CreateListOfCashierFullNames(order.CashierId);
-            ViewData["ClientId"] = _customSelectList.CreateListOfClientNames((int)order.ClientId);
+            ViewData["ClientId"] = _customSelectList.CreateListOfClientNames(order.ClientId.ToString());
             return View(order);
         }
 
@@ -93,7 +93,7 @@ namespace CoffeeHouse.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["CashierId"] = _customSelectList.CreateListOfCashierFullNames(order.CashierId);
-            ViewData["ClientId"] = _customSelectList.CreateListOfClientNames((int)order.ClientId);
+            ViewData["ClientId"] = _customSelectList.CreateListOfClientNames(order.ClientId.ToString());
             return View(order);
         }
 

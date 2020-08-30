@@ -5,13 +5,13 @@ namespace CoffeeHouse.Services.CustomSelectList.Interfaces
     public interface ICustomSelectList
     {
         SelectList CreateListOfCategoryNames();
-        SelectList CreateListOfCategoryNames(int defaultIntId);
+        SelectList CreateListOfCategoryNames(int defaultItemId);
         SelectList CreateListOfClientNames();
-        SelectList CreateListOfClientNames(int defaultIntId);
+        SelectList CreateListOfClientNames(string defaultItemId);
         SelectList CreateListOfCashierFullNames();
-        SelectList CreateListOfCashierFullNames(int defaultIntId);
+        SelectList CreateListOfCashierFullNames(int defaultItemId);
         SelectList CreateListOfProductFullNames();
-        SelectList CreateListOfProductFullNames(int defaultIntId);
+        SelectList CreateListOfProductFullNames(int defaultItemId);
         SelectList CreateListOfOrderProdMarks();
         SelectList CreateListOfOrderProdMarks(string defaultMark);
     }

@@ -1,5 +1,4 @@
-﻿using CoffeeHouse.Models;
-using CoffeeHouse.Services.CustomSelectList.Interfaces;
+﻿using CoffeeHouse.Services.CustomSelectList.Interfaces;
 using CoffeeHouse.Services.DbRepositories.Interfaces;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
@@ -31,9 +30,9 @@ namespace CoffeeHouse.Services.CustomSelectList
             return new SelectList(_cashierRepository.GetAllOrderedByFullName(), "Id", "FullName");
         }
 
-        public SelectList CreateListOfCashierFullNames(int defaultIntId)
+        public SelectList CreateListOfCashierFullNames(int defaultItemId)
         {
-            return new SelectList(_cashierRepository.GetAllOrderedByFullName(), "Id", "FullName", defaultIntId);
+            return new SelectList(_cashierRepository.GetAllOrderedByFullName(), "Id", "FullName", defaultItemId);
         }
 
         public SelectList CreateListOfCategoryNames()
@@ -41,9 +40,9 @@ namespace CoffeeHouse.Services.CustomSelectList
             return new SelectList(_categoryRepository.GetAllOrderedByName(), "Id", "Name");
         }
 
-        public SelectList CreateListOfCategoryNames(int defaultIntId)
+        public SelectList CreateListOfCategoryNames(int defaultItemId)
         {
-            return new SelectList(_categoryRepository.GetAllOrderedByName(), "Id", "Name", defaultIntId);
+            return new SelectList(_categoryRepository.GetAllOrderedByName(), "Id", "Name", defaultItemId);
         }
 
         public SelectList CreateListOfClientNames()
@@ -51,9 +50,9 @@ namespace CoffeeHouse.Services.CustomSelectList
             return new SelectList(GetListOfClientNamesWithEmptyItem(), "Id", "Name");
         }
 
-        public SelectList CreateListOfClientNames(int defaultIntId)
+        public SelectList CreateListOfClientNames(string defaultItemId)
         {
-            return new SelectList(GetListOfClientNamesWithEmptyItem(), "Id", "Name", defaultIntId);
+            return new SelectList(GetListOfClientNamesWithEmptyItem(), "Id", "Name", defaultItemId);
         }
 
         private List<object> GetListOfClientNamesWithEmptyItem()
@@ -93,9 +92,9 @@ namespace CoffeeHouse.Services.CustomSelectList
             return new SelectList(GetProductFullNames(), "Id", "Name");
         }
 
-        public SelectList CreateListOfProductFullNames(int defaultIntId)
+        public SelectList CreateListOfProductFullNames(int defaultItemId)
         {
-            return new SelectList(GetProductFullNames(), "Id", "Name", defaultIntId);
+            return new SelectList(GetProductFullNames(), "Id", "Name", defaultItemId);
         }
 
         private IEnumerable<object> GetProductFullNames()

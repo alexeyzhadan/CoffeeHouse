@@ -67,7 +67,7 @@ namespace CoffeeHouse.Controllers
             {
                 if (_clientRepository.Exists(client))
                 {
-                    await _clientRepository.AddAsync(client);
+                    await _clientRepository.UpdateAsync(client);
                 }
                 else
                 {
