@@ -1,4 +1,5 @@
 ﻿using CoffeeHouse.Services.DbRepositories.Interfaces;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace CoffeeHouse.Models
@@ -15,5 +16,7 @@ namespace CoffeeHouse.Models
 
         [Required]
         public decimal Cashback { get; set; } = 0.0m;
+
+        public List<Order> Orders { get; set; }
     }
 }

@@ -23,6 +23,11 @@ namespace CoffeeHouse.Data
 
             builder.Entity<OrderProd>()
                 .HasKey(e => new { e.Mark, e.OrderId, e.ProductId });
+            builder.Entity<Order>()
+                .HasOne(o => o.Client)
+                .WithMany(c => c.Orders)
+                .HasForeignKey(o => o.ClientId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }
