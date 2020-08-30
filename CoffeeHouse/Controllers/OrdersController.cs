@@ -26,7 +26,7 @@ namespace CoffeeHouse.Controllers
         public async Task<IActionResult> Index()
         {
             return View(await _orderRepository
-                .GetAllWithCashiersAndClientsOrderByDate()
+                .GetAllWithCashiersAndClientsOrderedByDate()
                 .ToListAsync());
         }
 
