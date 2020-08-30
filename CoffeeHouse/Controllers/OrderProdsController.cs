@@ -1,12 +1,8 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using CoffeeHouse.Data;
 using CoffeeHouse.Models;
-using System.Collections.Generic;
 using CoffeeHouse.Services.DbRepositories.Interfaces;
+using CoffeeHouse.Services.CustomSelectList.Interfaces;
 
 namespace CoffeeHouse.Controllers
 {
@@ -15,15 +11,18 @@ namespace CoffeeHouse.Controllers
         private readonly IOrderRepository _orderRepository;
         private readonly IOrderProdRepository _orderProdRepository;
         private readonly IProductRepository _productRepository;
+        private readonly ICustomSelectList _customSelectList;
 
         public OrderProdsController(
             IOrderRepository orderRepository,
             IOrderProdRepository orderProdRepository,
-            IProductRepository productRepository)
+            IProductRepository productRepository,
+            ICustomSelectList customSelectList)
         {
             _orderRepository = orderRepository;
             _orderProdRepository = orderProdRepository;
             _productRepository = productRepository;
+            _customSelectList = customSelectList;
         }
 
         public async Task<IActionResult> Index(int? orderId)
@@ -58,7 +57,8 @@ namespace CoffeeHouse.Controllers
 
             var model = new OrderProd { OrderId = (int)orderId };
 
-            ViewData["ProductId"] = new SelectList(GetProductFullNames(), "Id", "Name");
+            ViewData["ProductId"] = _customSelectList.CreateListOfProductFullNames();
+            ViewData["Mark"] = _customSelectList.CreateListOfOrderProdMarks();
             return View(model);
         }
 
@@ -71,7 +71,8 @@ namespace CoffeeHouse.Controllers
                 await _orderProdRepository.AddAsync(orderProd);
                 return RedirectToAction(nameof(Index), new { orderId = orderProd.OrderId });
             }
-            ViewData["ProductId"] = new SelectList(GetProductFullNames(), "Id", "Name", orderProd.ProductId);
+            ViewData["ProductId"] = _customSelectList.CreateListOfProductFullNames(orderProd.ProductId);
+            ViewData["Mark"] = _customSelectList.CreateListOfOrderProdMarks(orderProd.Mark);
             return View(orderProd);
         }
 
@@ -89,7 +90,8 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            ViewData["ProductId"] = new SelectList(GetProductFullNames(), "Id", "Name", orderProd.ProductId);
+            ViewData["ProductId"] = _customSelectList.CreateListOfProductFullNames(orderProd.ProductId);
+            ViewData["Mark"] = _customSelectList.CreateListOfOrderProdMarks(orderProd.Mark);
             return View(orderProd);
         }
 
@@ -125,7 +127,8 @@ namespace CoffeeHouse.Controllers
                 }
                 return RedirectToAction(nameof(Index), new { orderId = orderProd.OrderId });
             }
-            ViewData["ProductId"] = new SelectList(GetProductFullNames(), "Id", "Name", orderProd.ProductId);
+            ViewData["ProductId"] = _customSelectList.CreateListOfProductFullNames(orderProd.ProductId);
+            ViewData["Mark"] = _customSelectList.CreateListOfOrderProdMarks(orderProd.Mark);
             return View(orderProd);
         }
 
@@ -159,18 +162,6 @@ namespace CoffeeHouse.Controllers
 
             await _orderProdRepository.RemoveAsync(orderProd);
             return RedirectToAction(nameof(Index), new { orderId });
-        }
-
-        private IEnumerable<object> GetProductFullNames()
-        {
-            var products = _productRepository
-                .GetAllWithCategoryOrderedByCategoryNameThenByName();
-            var fullNameProducts = products.Select(p => new 
-            {
-                Id = p.Id,
-                Name = p.Name + ", " + p.Quantity
-            }).AsEnumerable<object>();
-            return fullNameProducts;
         }
     }
 }

@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using CoffeeHouse.Models;
 using CoffeeHouse.Services.DbRepositories.Interfaces;
+using CoffeeHouse.Services.CustomSelectList.Interfaces;
 
 namespace CoffeeHouse.Controllers
 {
@@ -12,15 +12,18 @@ namespace CoffeeHouse.Controllers
         private readonly IOrderRepository _orderRepository;
         private readonly IClientRepository _clientRepository;
         private readonly ICashierRepository _cashierRepository;
+        private readonly ICustomSelectList _customSelectList;
 
         public OrdersController(
             IOrderRepository orderRepository,
             IClientRepository clientRepository,
-            ICashierRepository cashierRepository)
+            ICashierRepository cashierRepository,
+            ICustomSelectList customSelectList)
         {
             _orderRepository = orderRepository;
             _clientRepository = clientRepository;
             _cashierRepository = cashierRepository;
+            _customSelectList = customSelectList;
         }
 
         public async Task<IActionResult> Index()
@@ -32,8 +35,8 @@ namespace CoffeeHouse.Controllers
 
         public IActionResult Create()
         {
-            ViewData["CashierId"] = GetSelectListOfCashiers();
-            ViewData["ClientId"] = GetSelectListOfClients();
+            ViewData["CashierId"] = _customSelectList.CreateListOfCashierFullNames();
+            ViewData["ClientId"] = _customSelectList.CreateListOfClientNames();
             return View();
         }
 
@@ -46,8 +49,8 @@ namespace CoffeeHouse.Controllers
                 await _orderRepository.AddAsync(order);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CashierId"] = GetSelectListOfCashiers(order.CashierId);
-            ViewData["ClientId"] = GetSelectListOfClients((int)order.ClientId);
+            ViewData["CashierId"] = _customSelectList.CreateListOfCashierFullNames(order.CashierId);
+            ViewData["ClientId"] = _customSelectList.CreateListOfClientNames((int)order.ClientId);
             return View(order);
         }
 
@@ -63,8 +66,8 @@ namespace CoffeeHouse.Controllers
             {
                 return NotFound();
             }
-            ViewData["CashierId"] = GetSelectListOfCashiers(order.CashierId);
-            ViewData["ClientId"] = GetSelectListOfClients((int)order.ClientId);
+            ViewData["CashierId"] = _customSelectList.CreateListOfCashierFullNames(order.CashierId);
+            ViewData["ClientId"] = _customSelectList.CreateListOfClientNames((int)order.ClientId);
             return View(order);
         }
 
@@ -89,8 +92,8 @@ namespace CoffeeHouse.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CashierId"] = GetSelectListOfCashiers(order.CashierId);
-            ViewData["ClientId"] = GetSelectListOfClients((int)order.ClientId);
+            ViewData["CashierId"] = _customSelectList.CreateListOfCashierFullNames(order.CashierId);
+            ViewData["ClientId"] = _customSelectList.CreateListOfClientNames((int)order.ClientId);
             return View(order);
         }
 
@@ -122,26 +125,6 @@ namespace CoffeeHouse.Controllers
 
             await _orderRepository.RemoveAsync(order);
             return RedirectToAction(nameof(Index));
-        }
-
-        private SelectList GetSelectListOfCashiers()
-        { 
-            return new SelectList(_cashierRepository.GetAllOrderedByFullName(), "Id", "FullName");
-        }
-
-        private SelectList GetSelectListOfCashiers(int defaultItemId)
-        {
-            return new SelectList(_cashierRepository.GetAllOrderedByFullName(), "Id", "FullName", defaultItemId);
-        }
-
-        private SelectList GetSelectListOfClients()
-        { 
-            return new SelectList(_clientRepository.GetAllOrderedByName(), "Id", "Name");
-        }
-
-        private SelectList GetSelectListOfClients(int defaultItemId)
-        {
-            return new SelectList(_clientRepository.GetAllOrderedByName(), "Id", "Name", defaultItemId);
         }
     }
 }

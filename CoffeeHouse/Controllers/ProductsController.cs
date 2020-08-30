@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using CoffeeHouse.Models;
 using CoffeeHouse.Services.DbRepositories.Interfaces;
+using CoffeeHouse.Services.CustomSelectList.Interfaces;
 
 namespace CoffeeHouse.Controllers
 {
@@ -11,13 +11,16 @@ namespace CoffeeHouse.Controllers
     {
         private readonly IProductRepository _productRepository;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly ICustomSelectList _customSelectList;
 
         public ProductsController(
             IProductRepository productRepository,
-            ICategoryRepository categoryRepository)
+            ICategoryRepository categoryRepository,
+            ICustomSelectList customSelectList)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
+            _customSelectList = customSelectList;
         }
 
         public async Task<IActionResult> Index()
@@ -29,7 +32,7 @@ namespace CoffeeHouse.Controllers
 
         public IActionResult Create()
         {
-            ViewData["CategoryId"] = GetSelectListCategory();
+            ViewData["CategoryId"] = _customSelectList.CreateListOfCategoryNames();
             return View();
         }
 
@@ -42,7 +45,7 @@ namespace CoffeeHouse.Controllers
                 await _productRepository.AddAsync(product);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = GetSelectListCategory(product.CategoryId);
+            ViewData["CategoryId"] = _customSelectList.CreateListOfCategoryNames(product.CategoryId);
             return View(product);
         }
 
@@ -58,7 +61,7 @@ namespace CoffeeHouse.Controllers
             {
                 return NotFound();
             }
-            ViewData["CategoryId"] = GetSelectListCategory(product.CategoryId);
+            ViewData["CategoryId"] = _customSelectList.CreateListOfCategoryNames(product.CategoryId);
             return View(product);
         }
 
@@ -83,7 +86,7 @@ namespace CoffeeHouse.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = GetSelectListCategory(product.CategoryId);
+            ViewData["CategoryId"] = _customSelectList.CreateListOfCategoryNames(product.CategoryId);
             return View(product);
         }
 
@@ -115,16 +118,6 @@ namespace CoffeeHouse.Controllers
 
             await _productRepository.RemoveAsync(product);
             return RedirectToAction(nameof(Index));
-        }
-
-        private SelectList GetSelectListCategory()
-        { 
-            return new SelectList(_categoryRepository.GetAllOrderedByName(), "Id", "Name");
-        }
-
-        private SelectList GetSelectListCategory(int defaultItem)
-        {
-            return new SelectList(_categoryRepository.GetAllOrderedByName(), "Id", "Name", defaultItem);
         }
     }
 }

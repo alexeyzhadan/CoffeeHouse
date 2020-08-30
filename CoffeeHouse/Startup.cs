@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using CoffeeHouse.Services.DbRepositories;
+using CoffeeHouse.Services.CustomSelectList;
 
 namespace CoffeeHouse
 {
@@ -27,6 +28,7 @@ namespace CoffeeHouse
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddDbRepositories();
+            services.AddCustomSelectList();
 
             services.AddControllersWithViews();
             services.AddRazorPages();
