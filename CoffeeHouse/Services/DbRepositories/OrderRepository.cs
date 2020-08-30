@@ -77,5 +77,19 @@ namespace CoffeeHouse.Services.DbRepositories
         {
             return await Task.Run(() => GetByIdWithOrderProdsAsTracking(id));
         }
+
+        public Order GetByIdWithClientAndCashier(int id)
+        {
+            return _db.Set<Order>()
+                .Include(o => o.Cashier)
+                .Include(o => o.Client)
+                .AsNoTracking()
+                .SingleOrDefault(o => o.Id == id);
+        }
+
+        public async Task<Order> GetByIdWithClientAndCashierAsync(int id)
+        {
+            return await Task.Run(() => GetByIdWithClientAndCashier(id));
+        }
     }
 }

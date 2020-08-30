@@ -97,7 +97,7 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            var product = await _productRepository.GetByIdAsync((int)id);
+            var product = await _productRepository.GetByIdWithCategoryAsync((int)id);
             if (product == null)
             {
                 return NotFound();

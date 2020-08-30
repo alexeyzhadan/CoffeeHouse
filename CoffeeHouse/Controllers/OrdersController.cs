@@ -104,7 +104,7 @@ namespace CoffeeHouse.Controllers
                 return NotFound();
             }
 
-            var order = await _orderRepository.GetByIdAsync((int)id);
+            var order = await _orderRepository.GetByIdWithClientAndCashierAsync((int)id);
             if (order == null)
             {
                 return NotFound();

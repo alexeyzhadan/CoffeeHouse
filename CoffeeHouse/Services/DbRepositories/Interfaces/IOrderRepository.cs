@@ -15,5 +15,7 @@ namespace CoffeeHouse.Services.DbRepositories.Interfaces
         Task<Order> GetByIdWithOrderProdsAndProductsAsync(int id);
         Order GetByIdWithOrderProdsAsTracking(int id);
         Task<Order> GetByIdWithOrderProdsAsTrackingAsync(int id);
+        Order GetByIdWithClientAndCashier(int id);
+        Task<Order> GetByIdWithClientAndCashierAsync(int id);
     }
 }
