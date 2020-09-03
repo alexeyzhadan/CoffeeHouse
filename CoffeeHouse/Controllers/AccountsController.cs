@@ -1,10 +1,12 @@
 ﻿using System.Threading.Tasks;
 using CoffeeHouse.Services.Accounts.Interfaces;
 using CoffeeHouse.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CoffeeHouse.Controllers
 {
+    [AllowAnonymous]
     public class AccountsController : Controller
     {
         private const string ORDER_REGISTRATION = "OrderRegistration";
@@ -42,6 +44,7 @@ namespace CoffeeHouse.Controllers
             return View(login);
         }
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()

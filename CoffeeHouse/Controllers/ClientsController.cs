@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CoffeeHouse.Models;
 using CoffeeHouse.Services.DbRepositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CoffeeHouse.Controllers
 {
+    [Authorize(Policy = "Admin")]
     public class ClientsController : Controller
     {
         private readonly IClientRepository _clientRepository;

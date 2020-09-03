@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using CoffeeHouse.Models;
 using CoffeeHouse.Services.DbRepositories.Interfaces;
 using CoffeeHouse.Services.CustomSelectList.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CoffeeHouse.Controllers
 {
+    [Authorize(Policy = "Admin")]
     public class OrdersController : Controller
     {
         private readonly IOrderRepository _orderRepository;

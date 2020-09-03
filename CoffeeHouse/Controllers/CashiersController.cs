@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using CoffeeHouse.Models;
 using CoffeeHouse.ViewModels;
 using CoffeeHouse.Services.Accounts.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CoffeeHouse.Controllers
 {
+    [Authorize(Policy = "Admin")]
     public class CashiersController : Controller
     {
         private readonly IAccountManager _accountManager;
