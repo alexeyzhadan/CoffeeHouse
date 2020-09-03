@@ -15,13 +15,16 @@ namespace CoffeeHouse.Services.Accounts
 
         private readonly ICashierRepository _cashierRepository;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly SignInManager<IdentityUser> _signInManager;
 
         public AccountManager(
             ICashierRepository cashierRepository,
-            UserManager<IdentityUser> userManager)
+            UserManager<IdentityUser> userManager,
+            SignInManager<IdentityUser> signInManager)
         {
             _cashierRepository = cashierRepository;
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         public List<User> GetUsers()
@@ -166,6 +169,26 @@ namespace CoffeeHouse.Services.Accounts
         public bool Exists(string id)
         {
             return _userManager.Users.Any(u => u.Id == id);
+        }
+
+        public async Task<bool> SignInAsync(string userName, string password)
+        {
+            var result = await _signInManager
+                .PasswordSignInAsync(userName, password, false, false);
+
+            return result.Succeeded;
+        }
+
+        public async Task SignOutAsync()
+        {
+            await _signInManager.SignOutAsync();
+        }
+
+        public async Task<bool> UserIsAdminAsync(string userName)
+        {
+            var user = await _userManager.FindByNameAsync(userName);
+            var claims = await _userManager.GetClaimsAsync(user);
+            return !claims.Any(c => c.Type == CASHIER_ID);
         }
     }
 }

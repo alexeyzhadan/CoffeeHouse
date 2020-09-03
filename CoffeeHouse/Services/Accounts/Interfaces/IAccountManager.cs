@@ -15,5 +15,8 @@ namespace CoffeeHouse.Services.Accounts.Interfaces
         Task DeleteAsync(User user);
         Task ChangePasswordAsync(string user, string newPassword);
         bool Exists(string id);
+        Task<bool> SignInAsync(string userName, string password);
+        Task SignOutAsync();
+        Task<bool> UserIsAdminAsync(string userName);
     }
 }
