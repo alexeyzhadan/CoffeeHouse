@@ -1,54 +1,23 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using CoffeeHouse.Models;
-using CoffeeHouse.Services.DbRepositories.Interfaces;
 using CoffeeHouse.ViewModels;
-using Microsoft.AspNetCore.Identity;
-using System.Security.Claims;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
+using CoffeeHouse.Services.Accounts.Interfaces;
 
 namespace CoffeeHouse.Controllers
 {
     public class CashiersController : Controller
     {
-        private readonly ICashierRepository _cashierRepository;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly IAccountManager _accountManager;
 
-        public CashiersController(
-            ICashierRepository cashierRepository,
-            UserManager<IdentityUser> userManager)
+        public CashiersController(IAccountManager accountManager)
         {
-            _cashierRepository = cashierRepository;
-            _userManager = userManager;
+            _accountManager = accountManager;
         }
 
         public async Task<IActionResult> Index()
         {
-            var cashiers = await _cashierRepository.GetAllOrderedByFullName().ToListAsync();
-            var model = cashiers.Join(
-                _userManager.Users,
-                c => c.UserName,
-                u => u.UserName,
-                (c, u) => new User
-                {
-                    Id = u.Id,
-                    UserName = c.UserName,
-                    FullName = c.FullName,
-                    Email = u.Email,
-                    PhoneNumber = u.PhoneNumber,
-                    IsAdmin = !_userManager
-                        .GetClaimsAsync(u)
-                        .Result
-                        .Any(c =>
-                            c.Type == "CashierId")
-                })
-                .OrderBy(m => m.IsAdmin)
-                .ThenBy(m => m.FullName)
-                .ToList();
-
-            return View(model);
+            return View(await _accountManager.GetUsersAsync());
         }
 
         public IActionResult Create()
@@ -62,45 +31,23 @@ namespace CoffeeHouse.Controllers
         {
             if (ModelState.IsValid)
             {
-                var identityUser = new IdentityUser
+                var newUser = new User
                 {
-                    Email = user.Email,
-                    EmailConfirmed = true,
+                    FullName = user.FullName,
+                    UserName = user.UserName,
                     PhoneNumber = user.PhoneNumber,
-                    PhoneNumberConfirmed = true,
-                    UserName = user.UserName
+                    Email = user.Email,
+                    IsAdmin = user.IsAdmin
                 };
-                var result = await _userManager.CreateAsync(identityUser, user.Password);
-
-                if (result.Succeeded)
-                {
-                    var cashier = new Cashier { FullName = user.FullName, UserName = user.UserName };
-                    await _cashierRepository.AddAsync(cashier);
-
-                    if (!user.IsAdmin)
-                    {
-                        await _userManager.AddClaimAsync(identityUser, new Claim("CashierId", cashier.Id.ToString()));
-                    }
-                    return RedirectToAction(nameof(Index));
-                }
-
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
+                await _accountManager.CreateAsync(newUser, user.Password);
+                return RedirectToAction(nameof(Index));
             }
             return View(user);
         }
 
-        public async Task<IActionResult> ChangePassword(string id)
+        public IActionResult ChangePassword(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
+            if (id == null || !_accountManager.Exists(id))
             {
                 return NotFound();
             }
@@ -124,10 +71,7 @@ namespace CoffeeHouse.Controllers
 
             if (ModelState.IsValid)
             {
-                var user = await _userManager.FindByIdAsync(newPassword.Id);
-                await _userManager.RemovePasswordAsync(user);
-                await _userManager.AddPasswordAsync(user, newPassword.Password);
-
+                await _accountManager.ChangePasswordAsync(id, newPassword.Password);
                 return RedirectToAction(nameof(Index));
             }
             return View(newPassword);
@@ -135,75 +79,27 @@ namespace CoffeeHouse.Controllers
 
         public async Task<IActionResult> Edit(string id)
         {
-            if (id == null)
+            if (id == null || !_accountManager.Exists(id))
             {
                 return NotFound();
             }
 
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            var model = new User 
-            {
-                Id = user.Id,
-                UserName = user.UserName,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                FullName = _cashierRepository.GetByUserName(user.UserName).FullName,
-                IsAdmin = !_userManager
-                    .GetClaimsAsync(user)
-                    .Result
-                    .Any(c =>
-                        c.Type == "CashierId")
-            };
-
-            return View(model);
+            var user = await _accountManager.GetUserByIdAsync(id);
+            return View(user);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(string id, [Bind("Id,FullName,UserName,PhoneNumber,Email,IsAdmin")] User user)
         {
-            if (id != user.Id)
+            if (id != user.Id || !_accountManager.Exists(id))
             {
                 return NotFound();
             }
 
             if (ModelState.IsValid)
             {
-                var identityUser = await _userManager.FindByIdAsync(user.Id);
-                if (identityUser != null)
-                {
-                    var cashier = await _cashierRepository.GetByUserNameAsTrackingAsync(identityUser.UserName);
-                    cashier.UserName = user.UserName;
-                    cashier.FullName = user.FullName;
-
-                    identityUser.UserName = user.UserName;
-                    identityUser.PhoneNumber = user.PhoneNumber;
-                    identityUser.Email = user.Email;
-
-                    var claimCashierId = (await _userManager.GetClaimsAsync(identityUser))
-                        .SingleOrDefault(c => c.Type == "CashierId");
-
-                    if (claimCashierId == null && !user.IsAdmin)
-                    {
-                        await _userManager.AddClaimAsync(identityUser, new Claim("CashierId", cashier.Id.ToString()));
-                    }
-                    else if (claimCashierId != null && user.IsAdmin)
-                    {
-                        await _userManager.RemoveClaimAsync(identityUser, claimCashierId);
-                    }
-
-                    await _cashierRepository.UpdateAsync(cashier);
-                    await _userManager.UpdateAsync(identityUser);
-                }
-                else
-                {
-                    return NotFound();
-                }
+                await _accountManager.UpdateAsync(user);
                 return RedirectToAction(nameof(Index));
             }
             return View(user);
@@ -211,47 +107,27 @@ namespace CoffeeHouse.Controllers
 
         public async Task<IActionResult> Delete(string id)
         {
-            if (id == null)
+            if (id == null || !_accountManager.Exists(id))
             {
                 return NotFound();
             }
 
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            var model = new User
-            {
-                Id = user.Id,
-                UserName = user.UserName,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                FullName = _cashierRepository.GetByUserName(user.UserName).FullName,
-                IsAdmin = !_userManager
-                    .GetClaimsAsync(user)
-                    .Result
-                    .Any(c =>
-                        c.Type == "CashierId")
-            };
-
-            return View(model);
+            var user = await _accountManager.GetUserByIdAsync(id);
+            return View(user);
         }
 
         [HttpPost, ActionName(nameof(Delete))]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirm(string id)
         {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
+            if (id == null || !_accountManager.Exists(id))
             {
                 return NotFound();
             }
 
-            await _cashierRepository.RemoveAsync(
-                _cashierRepository.GetByUserNameAsTracking(user.UserName));
-            await _userManager.DeleteAsync(user);
+            var user = await _accountManager.GetUserByIdAsync(id);
+
+            await _accountManager.DeleteAsync(user);
             return RedirectToAction(nameof(Index));
         }
     }

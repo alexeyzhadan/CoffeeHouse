@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using CoffeeHouse.Services.DbRepositories;
 using CoffeeHouse.Services.CustomSelectList;
+using CoffeeHouse.Services.Accounts;
 
 namespace CoffeeHouse
 {
@@ -39,6 +40,7 @@ namespace CoffeeHouse
 
             services.AddDbRepositories();
             services.AddCustomSelectList();
+            services.AddAccountManager();
 
             services.AddControllersWithViews();
             services.AddRazorPages();
